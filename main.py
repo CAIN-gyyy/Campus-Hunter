@@ -66,9 +66,7 @@ API_TIME_FMT = "%Y-%m-%d %H:%M"
 
 # ──────────────────────────── API Layer ────────────────────────────
 
-
 def api_get(endpoint: str, params: dict | None = None, debug_label: str = "") -> dict | None:
-    """Send a GET request and return parsed JSON, or None on failure."""
     try:
         resp = requests.get(
             f"{BASE_URL}{endpoint}",
@@ -86,9 +84,7 @@ def api_get(endpoint: str, params: dict | None = None, debug_label: str = "") ->
     except json.JSONDecodeError:
         return {"_error": "返回数据解析失败（非JSON）"}
 
-
 def api_post(endpoint: str, payload: dict) -> dict | None:
-    """Send a POST request and return parsed JSON, or None on failure."""
     try:
         resp = requests.post(
             f"{BASE_URL}{endpoint}",
@@ -104,28 +100,20 @@ def api_post(endpoint: str, payload: dict) -> dict | None:
     except json.JSONDecodeError:
         return {"_error": "返回数据解析失败（非JSON）"}
 
-
 def fetch_user_info() -> dict:
     return api_get("/api/user/info") or {}
 
-
 def fetch_scores() -> dict:
-    result = api_get("/api/transcript/score", debug_label="SCORE") or {}
-    return result
-
+    return api_get("/api/transcript/score", debug_label="SCORE") or {}
 
 def fetch_courses(page: int = 1, limit: int = 20) -> dict:
-    result = api_get("/api/course/list", {"page": page, "limit": limit}, debug_label="COURSE") or {}
-    return result
-
+    return api_get("/api/course/list", {"page": page, "limit": limit}, debug_label="COURSE") or {}
 
 def apply_course(course_id: int) -> dict:
     payload = {"course_id": course_id, "template_id": DEFAULT_TEMPLATE_ID}
     return api_post("/api/course/apply", payload) or {}
 
-
 def parse_api_time(time_str: str) -> datetime | None:
-    """Parse an API time string like '2026-03-02 14:35' into a datetime."""
     if not time_str:
         return None
     for fmt in (API_TIME_FMT, "%Y-%m-%d %H:%M:%S"):
@@ -138,19 +126,15 @@ def parse_api_time(time_str: str) -> datetime | None:
     except ValueError:
         return None
 
-
 # ──────────────────────────── Sniper Engine ────────────────────────
 
-
 class SniperEngine:
-    """Background thread that watches courses and fires apply at the right time."""
-
     def __init__(self, log_callback):
-        self._watched: dict[int, dict] = {}  # course_id -> course dict
+        self._watched: dict[int, dict] = {}
         self._lock = threading.Lock()
         self._running = False
         self._thread: threading.Thread | None = None
-        self._log = log_callback  # callable(str)
+        self._log = log_callback
 
     def add(self, course: dict):
         cid = course.get("id")
@@ -181,7 +165,7 @@ class SniperEngine:
     def _loop(self):
         while self._running:
             now = datetime.now()
-            to_fire: list[dict] = []
+            to_fire: list[dict] =[]
 
             with self._lock:
                 for cid, course in list(self._watched.items()):
@@ -214,25 +198,24 @@ class SniperEngine:
 
             time.sleep(0.5)
 
-
 # ──────────────────────────── Flet Application ─────────────────────
 
-
 def main(page: ft.Page):
-    # ── Monokai Pro Color Palette ──
-    BG_DEEP = "#2D2A2E"
-    BG_CARD = "#403E41"
-    BORDER = "#525053"
-    TEXT_PRIMARY = "#FCFCFA"
-    TEXT_SECONDARY = "#939293"
-    TEXT_MUTED = "#727072"
-    ACCENT_GREEN = "#A9DC76"
-    ACCENT_ROSE = "#FF6188"
-    ACCENT_AMBER = "#FFD866"
-    ACCENT_BLUE = "#78DCE8"
-    ACCENT_PURPLE = "#AB9DF2"
-    PILL_BG = "#525053"
-    PILL_TEXT = "#FCFCFA"
+    # ── Modern Minimalist Dark Palette ──
+    BG_DEEP = "#09090B"         # Zinc 950 - 极黑背景
+    BG_CARD = "#18181B"         # Zinc 900 - 卡片背景
+    BORDER = "#27272A"          # Zinc 800 - 柔和边框
+    TEXT_PRIMARY = "#FAFAFA"    # Zinc 50 - 主文本
+    TEXT_SECONDARY = "#A1A1AA"  # Zinc 400 - 次要文本
+    TEXT_MUTED = "#52525B"      # Zinc 600 - 弱化文本
+    
+    ACCENT_PRIMARY = "#3B82F6"  # Blue 500 - 核心品牌色
+    ACCENT_GREEN = "#10B981"    # Emerald 500 - 成功色
+    ACCENT_ROSE = "#EF4444"     # Red 500 - 错误/满额色
+    ACCENT_AMBER = "#F59E0B"    # Amber 500 - 警告色
+    
+    PILL_BG = "#27272A"
+    PILL_TEXT = "#D4D4D8"
 
     # ── Page settings ──
     page.title = "第二课堂自动抢课助手"
@@ -242,7 +225,7 @@ def main(page: ft.Page):
     page.bgcolor = BG_DEEP
     page.theme_mode = ft.ThemeMode.DARK
     page.theme = ft.Theme(
-        color_scheme_seed=ACCENT_AMBER,
+        color_scheme_seed=ACCENT_PRIMARY,
         font_family="Microsoft YaHei",
     )
     page.fonts = {
@@ -253,9 +236,8 @@ def main(page: ft.Page):
     if not _TOKEN:
         token_dialog = ft.AlertDialog(
             modal=True,
-            title=ft.Text("⚠️ Token 未配置", size=18, weight=ft.FontWeight.BOLD, color=ACCENT_ROSE),
-            content=ft.Column(
-                [
+            title=ft.Text("Token 未配置", size=18, weight=ft.FontWeight.W_600, color=ACCENT_ROSE),
+            content=ft.Column([
                     ft.Text(
                         "请打开与本程序同目录下的 token.txt 文件,\n"
                         "粘贴你的 Bearer Token (包含 'Bearer ' 前缀),\n"
@@ -271,18 +253,20 @@ def main(page: ft.Page):
                 tight=True,
             ),
             actions=[
-                ft.TextButton("知道了", on_click=lambda e: page.window.close()),
+                ft.TextButton("知道了", on_click=lambda e: page.window.close(), style=ft.ButtonStyle(color=TEXT_PRIMARY)),
             ],
             actions_alignment=ft.MainAxisAlignment.END,
+            bgcolor=BG_CARD,
+            shape=ft.RoundedRectangleBorder(radius=8),
         )
         page.overlay.append(token_dialog)
         token_dialog.open = True
         page.update()
-        return  # Stop here — no point making API calls without a token
+        return
 
     # ── State ──
     courses_data: list[dict] = []
-    log_lines: list[str] = []
+    log_lines: list[str] =[]
 
     # ── Log callback ──
     def append_log(msg: str):
@@ -300,51 +284,53 @@ def main(page: ft.Page):
     sniper.start()
 
     # ── UI helper factories ──
-    def _label(text, size=13, color=TEXT_SECONDARY, weight=None):
+    def _label(text, size=13, color=TEXT_SECONDARY, weight=ft.FontWeight.NORMAL):
         return ft.Text(text, size=size, color=color, weight=weight)
 
-    def _value(text, size=14, color=TEXT_PRIMARY, weight=ft.FontWeight.W_600):
+    def _value(text, size=14, color=TEXT_PRIMARY, weight=ft.FontWeight.W_500):
         return ft.Text(str(text), size=size, color=color, weight=weight)
 
     def _pill(text, icon=None, icon_color=PILL_TEXT, bg=PILL_BG, text_color=PILL_TEXT, size=11):
-        """Modern pill-style tag."""
-        row_items = []
+        """Modern minimal pill."""
+        row_items =[]
         if icon:
             row_items.append(ft.Icon(icon, size=12, color=icon_color))
         row_items.append(ft.Text(text, size=size, color=text_color, weight=ft.FontWeight.W_500))
         return ft.Container(
             content=ft.Row(row_items, spacing=4, tight=True),
             bgcolor=bg,
-            border_radius=16,
-            padding=ft.Padding(left=10, top=4, right=10, bottom=4),
+            border_radius=4, # Harder edges for modern feel
+            padding=ft.Padding(left=8, top=4, right=8, bottom=4),
         )
 
-    def _section_header(title, icon, color=ACCENT_BLUE):
+    def _section_header(title, icon, color=TEXT_PRIMARY):
         return ft.Row([
             ft.Icon(icon, color=color, size=16),
-            _label(title, size=15, color=color, weight=ft.FontWeight.W_600),
+            _label(title, size=14, color=color, weight=ft.FontWeight.W_600),
         ], spacing=6)
 
     # ── Snackbar helper ──
     def show_snack(msg: str, error=False):
         page.snack_bar = ft.SnackBar(
-            ft.Text(msg, color=TEXT_PRIMARY),
+            ft.Text(msg, color=TEXT_PRIMARY, weight=ft.FontWeight.W_500),
             bgcolor=ACCENT_ROSE if error else ACCENT_GREEN,
             duration=3000,
+            behavior=ft.SnackBarBehavior.FLOATING,
+            margin=20,
+            shape=ft.RoundedRectangleBorder(radius=8)
         )
         page.snack_bar.open = True
         page.update()
 
     # ═══════════════════  LEFT PANEL — User Info & Score  ═══════════════════
 
-    avatar_icon = ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=52, color=ACCENT_BLUE)
-    username_text = _value("加载中...", size=17, weight=ft.FontWeight.BOLD)
-    user_detail_col = ft.Column(spacing=4)
+    avatar_icon = ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=48, color=TEXT_MUTED)
+    username_text = _value("加载中...", size=16, weight=ft.FontWeight.W_600)
+    user_detail_col = ft.Column(spacing=6)
 
     user_card = ft.Container(
-        content=ft.Column(
-            [
-                _section_header("用户信息", ft.Icons.PERSON, ACCENT_BLUE),
+        content=ft.Column([
+                _section_header("账户信息", ft.Icons.PERSON_OUTLINE, TEXT_PRIMARY),
                 ft.Divider(height=1, color=BORDER),
                 ft.Row(
                     [avatar_icon, ft.Column([username_text], spacing=2)],
@@ -353,97 +339,100 @@ def main(page: ft.Page):
                 ),
                 user_detail_col,
             ],
-            spacing=10,
+            spacing=12,
         ),
         bgcolor=BG_CARD,
-        border_radius=12,
-        padding=18,
+        border_radius=8,
+        padding=20,
         border=ft.border.all(1, BORDER),
     )
 
-    # Score card — total + compact 2-column breakdown
     score_total_text = ft.Text(
-        "累计基础分: --", size=32, weight=ft.FontWeight.BOLD, color=ACCENT_AMBER,
+        "--", size=36, weight=ft.FontWeight.W_600, color=TEXT_PRIMARY,
     )
-    score_breakdown_row = ft.Row(wrap=True, spacing=4, run_spacing=4)
+    score_breakdown_row = ft.Row(wrap=True, spacing=6, run_spacing=6)
 
     score_card = ft.Container(
-        content=ft.Column(
-            [
-                _section_header("成绩单", ft.Icons.SCHOOL_OUTLINED, ACCENT_GREEN),
+        content=ft.Column([
+                _section_header("成绩总览", ft.Icons.AUTO_GRAPH, TEXT_PRIMARY),
                 ft.Divider(height=1, color=BORDER),
                 ft.Container(
-                    content=score_total_text,
+                    content=ft.Column([
+                        _label("累计基础分", size=12),
+                        score_total_text,
+                    ], spacing=2, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                     alignment=ft.alignment.center,
-                    padding=ft.Padding(left=0, top=6, right=0, bottom=2),
+                    padding=ft.Padding(left=0, top=10, right=0, bottom=10),
                 ),
                 score_breakdown_row,
             ],
-            spacing=8,
+            spacing=10,
         ),
         bgcolor=BG_CARD,
-        border_radius=12,
-        padding=18,
+        border_radius=8,
+        padding=20,
         border=ft.border.all(1, BORDER),
     )
 
     status_indicator = ft.Container(
-        content=ft.Row(
-            [
-                ft.Container(width=8, height=8, border_radius=4, bgcolor=ACCENT_GREEN),
-                _label("抢课引擎运行中", size=12, color=ACCENT_GREEN),
+        content=ft.Row([
+                ft.Container(width=6, height=6, border_radius=3, bgcolor=ACCENT_PRIMARY),
+                _label("引擎守护中", size=12, color=ACCENT_PRIMARY, weight=ft.FontWeight.W_500),
             ],
-            spacing=8,
+            spacing=6,
+            tight=True,
         ),
-        bgcolor=BG_DEEP,
-        border_radius=8,
-        padding=ft.Padding(left=12, top=8, right=12, bottom=8),
-        border=ft.border.all(1, ACCENT_GREEN + "40"),
+        bgcolor="#1A3B82F6", # 10% opacity
+        border_radius=6,
+        padding=ft.Padding(left=10, top=6, right=10, bottom=6),
     )
 
     left_panel = ft.Container(
-        content=ft.Column(
-            [user_card, score_card, ft.Container(expand=True), status_indicator],
-            spacing=14,
+        content=ft.Column([user_card, score_card, ft.Container(expand=True), status_indicator],
+            spacing=16,
             expand=True,
         ),
-        width=340,
-        padding=ft.Padding(left=16, top=16, right=8, bottom=16),
+        width=320,
+        padding=ft.Padding(left=20, top=20, right=10, bottom=20),
         bgcolor=BG_DEEP,
     )
 
     # ═══════════════════  RIGHT PANEL — Activity List  ═══════════════════
 
-    activity_list = ft.ListView(spacing=10, expand=True, auto_scroll=False)
+    activity_list = ft.ListView(spacing=12, expand=True, auto_scroll=False)
 
     refresh_btn = ft.ElevatedButton(
         text="刷新列表",
         icon=ft.Icons.REFRESH,
-        bgcolor=ACCENT_GREEN,
-        color="#ffffff",
-        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
-        height=38,
+        bgcolor=TEXT_PRIMARY,
+        color=BG_DEEP,
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=6),
+            padding=ft.Padding(left=16, top=0, right=16, bottom=0)
+        ),
+        height=32,
     )
 
-    page_label = _value("第 1 页", size=13, color=TEXT_MUTED)
-    prev_btn = ft.IconButton(ft.Icons.CHEVRON_LEFT, icon_color=TEXT_MUTED, icon_size=20, disabled=True)
-    next_btn = ft.IconButton(ft.Icons.CHEVRON_RIGHT, icon_color=TEXT_MUTED, icon_size=20)
+    page_label = _value("第 1 页", size=12, color=TEXT_MUTED)
+    prev_btn = ft.IconButton(ft.Icons.CHEVRON_LEFT, icon_color=TEXT_MUTED, icon_size=18, disabled=True, width=32, height=32)
+    next_btn = ft.IconButton(ft.Icons.CHEVRON_RIGHT, icon_color=TEXT_MUTED, icon_size=18, width=32, height=32)
     current_page = [1]
 
     log_field = ft.TextField(
         label="运行日志",
         multiline=True,
-        min_lines=5,
-        max_lines=5,
+        min_lines=4,
+        max_lines=4,
         read_only=True,
         value="",
         text_size=12,
-        label_style=ft.TextStyle(color=ACCENT_BLUE, size=13),
+        label_style=ft.TextStyle(color=TEXT_SECONDARY, size=12),
         border_color=BORDER,
-        focused_border_color=ACCENT_BLUE,
+        focused_border_color=BORDER,
         color=TEXT_SECONDARY,
-        bgcolor=BG_DEEP,
-        border_radius=10,
+        bgcolor=BG_CARD,
+        border_radius=8,
+        content_padding=12,
     )
 
     # ── Build a course card ──
@@ -473,9 +462,9 @@ def main(page: ft.Page):
         # Toggle
         toggle = ft.Switch(
             value=sniper.is_watched(cid),
-            active_color=ACCENT_AMBER,
-            active_track_color=ACCENT_AMBER + "44",
-            inactive_thumb_color=TEXT_MUTED,
+            active_color=TEXT_PRIMARY,
+            active_track_color=ACCENT_PRIMARY,
+            inactive_thumb_color=TEXT_SECONDARY,
             inactive_track_color=BORDER,
             disabled=is_full,
         )
@@ -488,29 +477,28 @@ def main(page: ft.Page):
 
         toggle.on_change = on_toggle
 
-        # Status badge
+        # Modern soft badges
         if sign_status == "进行中":
             status_badge = ft.Container(
-                content=ft.Text(sign_status, size=11, color="#2D2A2E", weight=ft.FontWeight.W_600),
-                bgcolor=ACCENT_GREEN, border_radius=12,
-                padding=ft.Padding(left=10, top=3, right=10, bottom=3),
+                content=ft.Text(sign_status, size=11, color=ACCENT_GREEN, weight=ft.FontWeight.W_500),
+                bgcolor="#1A10B981", border_radius=4,
+                padding=ft.Padding(left=8, top=2, right=8, bottom=2),
             )
         elif sign_status == "名额已满":
             status_badge = ft.Container(
-                content=ft.Text(sign_status, size=11, color="#ffffff", weight=ft.FontWeight.W_600),
-                bgcolor=ACCENT_ROSE, border_radius=12,
-                padding=ft.Padding(left=10, top=3, right=10, bottom=3),
+                content=ft.Text(sign_status, size=11, color=ACCENT_ROSE, weight=ft.FontWeight.W_500),
+                bgcolor="#1AEF4444", border_radius=4,
+                padding=ft.Padding(left=8, top=2, right=8, bottom=2),
             )
         elif sign_status:
             status_badge = ft.Container(
                 content=ft.Text(sign_status, size=11, color=TEXT_SECONDARY, weight=ft.FontWeight.W_500),
-                bgcolor=PILL_BG, border_radius=12,
-                padding=ft.Padding(left=10, top=3, right=10, bottom=3),
+                bgcolor=BORDER, border_radius=4,
+                padding=ft.Padding(left=8, top=2, right=8, bottom=2),
             )
         else:
             status_badge = ft.Container()
 
-        # Surplus display
         if is_full:
             surplus_text, surplus_color = "名额已满", ACCENT_ROSE
         elif surplus <= 5:
@@ -518,7 +506,6 @@ def main(page: ft.Page):
         else:
             surplus_text, surplus_color = f"剩余 {surplus} / {max_slots}", ACCENT_GREEN
 
-        # Registration time
         reg_time = ""
         if sign_start and sign_end:
             reg_time = f"{sign_start} ~ {sign_end}"
@@ -528,66 +515,65 @@ def main(page: ft.Page):
         card = ft.Container(
             content=ft.Column(
                 [
-                    # Title + Status
                     ft.Row([
                         ft.Container(
                             content=ft.Text(
                                 title, size=15, weight=ft.FontWeight.W_600,
-                                color=TEXT_PRIMARY, max_lines=2,
+                                color=TEXT_PRIMARY, max_lines=1,
                                 overflow=ft.TextOverflow.ELLIPSIS,
                             ),
                             expand=True,
                         ),
                         status_badge,
                     ]),
-                    # Pill tags
                     ft.Row([
                         _pill(dimension, icon=ft.Icons.CATEGORY_OUTLINED,
-                              icon_color=ACCENT_BLUE, bg=ACCENT_BLUE + "22",
-                              text_color=ACCENT_BLUE),
-                        _pill(f"可获 {score} 分", icon=ft.Icons.STAR_OUTLINE,
-                              icon_color=ACCENT_AMBER, bg=ACCENT_AMBER + "22",
-                              text_color=ACCENT_AMBER),
+                              icon_color=TEXT_SECONDARY, bg=BORDER,
+                              text_color=TEXT_SECONDARY),
+                        _pill(f"可获 {score} 分", icon=ft.Icons.STAR_BORDER,
+                              icon_color=ACCENT_PRIMARY, bg="#1A3B82F6",
+                              text_color=ACCENT_PRIMARY),
                     ], spacing=8),
-                    # Time & Place
+                    ft.Container(height=2), # Visual Spacer
                     ft.Row([
-                        ft.Icon(ft.Icons.SCHEDULE, size=13, color=TEXT_MUTED),
+                        ft.Icon(ft.Icons.PLACE_OUTLINED, size=14, color=TEXT_MUTED),
                         ft.Text(time_place, size=12, color=TEXT_SECONDARY,
-                                max_lines=2, overflow=ft.TextOverflow.ELLIPSIS, expand=True),
+                                max_lines=1, overflow=ft.TextOverflow.ELLIPSIS, expand=True),
                     ], spacing=6),
-                    # Registration time
                     ft.Row([
-                        ft.Icon(ft.Icons.DATE_RANGE, size=13, color=TEXT_MUTED),
+                        ft.Icon(ft.Icons.ACCESS_TIME, size=14, color=TEXT_MUTED),
                         _label(f"报名: {reg_time}" if reg_time else "报名时间待定", size=12),
                     ], spacing=6) if reg_time else ft.Container(),
-                    # Surplus + Toggle
+                    
+                    ft.Divider(height=1, color=BORDER),
+
                     ft.Container(
                         content=ft.Row([
                             ft.Row([
-                                ft.Icon(ft.Icons.EVENT_SEAT, size=14, color=surplus_color),
-                                ft.Text(surplus_text, size=13, color=surplus_color, weight=ft.FontWeight.W_600),
-                            ], spacing=5),
+                                ft.Container(width=6, height=6, border_radius=3, bgcolor=surplus_color),
+                                ft.Text(surplus_text, size=12, color=surplus_color, weight=ft.FontWeight.W_500),
+                            ], spacing=6),
                             ft.Row([
-                                _label("自动抢", size=12, color=ACCENT_AMBER if not is_full else TEXT_MUTED),
+                                _label("自动抢课", size=12, color=TEXT_PRIMARY if not is_full else TEXT_MUTED),
                                 toggle,
-                            ], spacing=4),
+                            ], spacing=6),
                         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                        padding=ft.Padding(left=0, top=4, right=0, bottom=0),
                     ),
                 ],
-                spacing=7,
+                spacing=8,
             ),
             bgcolor=BG_CARD,
-            border_radius=12,
-            padding=ft.Padding(left=16, top=14, right=16, bottom=14),
+            border_radius=8,
+            padding=ft.Padding(left=16, top=16, right=16, bottom=12),
             border=ft.border.all(1, BORDER),
-            animate=ft.Animation(200, ft.AnimationCurve.EASE_IN_OUT),
+            animate=ft.Animation(150, ft.AnimationCurve.EASE_OUT),
             on_hover=lambda e: _card_hover(e, card),
         )
         return card
 
     def _card_hover(e, card):
-        card.border = ft.border.all(1, ACCENT_BLUE if e.data == "true" else BORDER)
+        # Subtle hover glow effect using primary accent color
+        card.border = ft.border.all(1, "#803B82F6" if e.data == "true" else BORDER)
         card.update()
 
     # ── Refresh logic ──
@@ -609,9 +595,9 @@ def main(page: ft.Page):
             return
 
         data_obj = result.get("data", {})
-        items = data_obj.get("items", []) if isinstance(data_obj, dict) else (data_obj if isinstance(data_obj, list) else [])
+        items = data_obj.get("items",[]) if isinstance(data_obj, dict) else (data_obj if isinstance(data_obj, list) else [])
 
-        filtered = [item for item in items if item.get("sign_status_label", "") != "已结束"]
+        filtered =[item for item in items if item.get("sign_status_label", "") != "已结束"]
 
         courses_data.clear()
         courses_data.extend(filtered)
@@ -620,8 +606,7 @@ def main(page: ft.Page):
         if not filtered:
             activity_list.controls.append(
                 ft.Container(
-                    content=ft.Column(
-                        [
+                    content=ft.Column([
                             ft.Icon(ft.Icons.INBOX_OUTLINED, size=48, color=TEXT_MUTED),
                             _label("暂无可报名活动", size=14, color=TEXT_MUTED),
                         ],
@@ -629,7 +614,7 @@ def main(page: ft.Page):
                         spacing=8,
                     ),
                     alignment=ft.alignment.center,
-                    padding=40,
+                    padding=60,
                 )
             )
         else:
@@ -656,31 +641,30 @@ def main(page: ft.Page):
     prev_btn.on_click = on_prev
     next_btn.on_click = on_next
 
-    header_row = ft.Row(
-        [
+    header_row = ft.Row([
             ft.Row([
-                ft.Icon(ft.Icons.LIST_ALT, color=ACCENT_BLUE, size=18),
-                _label("活动列表", size=15, color=ACCENT_BLUE, weight=ft.FontWeight.W_600),
-            ], spacing=6),
-            ft.Row([prev_btn, page_label, next_btn, refresh_btn], spacing=4),
+                ft.Icon(ft.Icons.APPS_OUTLINED, color=TEXT_PRIMARY, size=20),
+                _label("发现活动", size=16, color=TEXT_PRIMARY, weight=ft.FontWeight.W_600),
+            ], spacing=8),
+            ft.Row([prev_btn, page_label, next_btn, refresh_btn], spacing=8),
         ],
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
     )
 
     right_panel = ft.Container(
         content=ft.Column(
-            [header_row, ft.Divider(height=1, color=BORDER), activity_list, log_field],
-            spacing=12,
+            [header_row, activity_list, log_field],
+            spacing=16,
             expand=True,
         ),
         expand=True,
-        padding=ft.Padding(left=8, top=16, right=16, bottom=16),
+        padding=ft.Padding(left=10, top=20, right=20, bottom=20),
         bgcolor=BG_DEEP,
     )
 
     # ═══════════════════  LAYOUT  ═══════════════════
 
-    divider_vert = ft.Container(width=1, bgcolor=BORDER, height=float("inf"))
+    divider_vert = ft.Container(width=1, bgcolor=BORDER, height=float("inf"), margin=ft.margin.symmetric(vertical=20))
 
     page.add(
         ft.Row([left_panel, divider_vert, right_panel], expand=True, spacing=0)
@@ -704,15 +688,13 @@ def main(page: ft.Page):
                 "学号": data.get("student_id") or data.get("number") or data.get("sn"),
                 "学院": data.get("college") or data.get("department"),
                 "班级": data.get("class_name") or data.get("class"),
-                "手机": data.get("phone") or data.get("mobile"),
             }
             user_detail_col.controls.clear()
             for k, v in detail_map.items():
                 if v:
                     user_detail_col.controls.append(
-                        ft.Row(
-                            [_label(f"{k}:", size=12, color=TEXT_MUTED), _value(str(v), size=12)],
-                            spacing=8,
+                        ft.Row([_label(f"{k}", size=12, color=TEXT_MUTED), _value(str(v), size=12, color=TEXT_SECONDARY)],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         )
                     )
             append_log(f"用户信息加载成功: {name}")
@@ -728,7 +710,7 @@ def main(page: ft.Page):
         score_breakdown_row.controls.clear()
 
         if result and "_error" in result:
-            score_total_text.value = "累计基础分: --"
+            score_total_text.value = "--"
             score_total_text.color = ACCENT_ROSE
             append_log(f"获取成绩单失败: {result['_error']}")
             page.update()
@@ -736,48 +718,45 @@ def main(page: ft.Page):
 
         try:
             data_obj = result.get("data")
-            leader_scores = []
+            leader_scores =[]
             if isinstance(data_obj, dict):
-                leader_scores = data_obj.get("leaderScore", [])
+                leader_scores = data_obj.get("leaderScore",[])
 
             if not leader_scores:
-                score_total_text.value = "累计基础分: --"
-                score_total_text.color = ACCENT_ROSE
+                score_total_text.value = "--"
+                score_total_text.color = TEXT_MUTED
                 append_log("成绩单为空或未找到 leaderScore")
             else:
                 total_score = sum(float(item.get("score", 0)) for item in leader_scores)
-                score_total_text.value = f"累计基础分: {total_score:.0f}"
-                score_total_text.color = ACCENT_AMBER
+                score_total_text.value = f"{total_score:.0f}"
+                score_total_text.color = TEXT_PRIMARY
 
-                # Compact 2-column breakdown
                 for item in leader_scores:
                     name = item.get("name", "未知")
                     val = float(item.get("score", 0))
-                    dot_color = ACCENT_GREEN if val >= 15 else (ACCENT_AMBER if val >= 5 else ACCENT_ROSE)
+                    # Simplified modern colors
+                    dot_color = ACCENT_PRIMARY if val >= 15 else (TEXT_SECONDARY if val >= 5 else BORDER)
                     score_breakdown_row.controls.append(
                         ft.Container(
-                            content=ft.Row(
-                                [
-                                    ft.Container(width=6, height=6, border_radius=3, bgcolor=dot_color),
-                                    ft.Text(f"{name}:", size=12, color=TEXT_SECONDARY),
-                                    ft.Text(f"{val:.0f}", size=12, color=TEXT_PRIMARY, weight=ft.FontWeight.W_600),
+                            content=ft.Row([
+                                    ft.Container(width=4, height=4, border_radius=2, bgcolor=dot_color),
+                                    ft.Text(f"{name}", size=12, color=TEXT_SECONDARY),
+                                    ft.Container(expand=True),
+                                    ft.Text(f"{val:.0f}", size=12, color=TEXT_PRIMARY, weight=ft.FontWeight.W_500),
                                 ],
-                                spacing=5,
-                                tight=True,
+                                spacing=4,
                             ),
-                            width=145,
-                            padding=ft.Padding(left=4, top=3, right=4, bottom=3),
+                            width=130, # adjusted for side-by-side fit
                         )
                     )
 
                 append_log(f"成绩单加载成功, 累计基础分: {total_score:.0f}")
 
         except Exception as exc:
-            score_total_text.value = "累计基础分: --"
+            score_total_text.value = "--"
             score_total_text.color = ACCENT_ROSE
             raw_str = json.dumps(result, ensure_ascii=False, default=str)
             append_log(f"[错误] 分数解析异常: {exc}")
-            append_log(f"[原始数据] {raw_str[:500]}")
 
         page.update()
 
